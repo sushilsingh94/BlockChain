@@ -38,6 +38,11 @@ type Load struct{
         ShipDate string `json:"shipdate"`
         DeliveryDate string `json:"deliverydate"`
         Status string `json:"status"`
+        EquipmentType string `json:"equipmenttype"`
+        AmountBilled string `json:"amountbilled"`
+        AmountPaid string `json:"amountpaid"`
+        Mileage string `json:"mileage"`
+        Weight string `json:"weight"`
 }
 
 // ============================================================================================================================
@@ -55,7 +60,7 @@ func (t *LoadChaincode) Init(stub shim.ChaincodeStubInterface, function string, 
         var err error
 
         var empty []string
-        jsonAsBytes, _ := json.Marshal(empty)                                                           //marshal an emtpy array of strings to clear the index
+        jsonAsBytes, _ := json.Marshal(empty)    //marshal an emtpy array of strings to clear the index
         err = stub.PutState(loadNumberIndexStr, jsonAsBytes)
         if err != nil {
                 return nil, err
@@ -74,15 +79,15 @@ func (t *LoadChaincode) Invoke(stub shim.ChaincodeStubInterface, function string
         // Handle different functions
         if function == "init" {
                 return t.Init(stub, function, args)
-        } else if function == "delete" {                                                                                //deletes an entity from its state
+        } else if function == "delete" {            //deletes an entity from its state
                 res, err := t.Delete(stub, args)
                 return res, err
-        } else if function == "write" {                                                                                 //writes a value to the chaincode state
+        } else if function == "write" {        //writes a value to the chaincode state
                 return t.Write(stub, args)
-        } else if function == "init_load" {                                                                     //create a new marble
+        } else if function == "init_load" {      //create a new marble
                 return t.init_load(stub, args)
         }
-        fmt.Println("invoke did not find func: " + function)                                    //error
+        fmt.Println("invoke did not find func: " + function)       //error
 
         return nil, errors.New("Received unknown function invocation")
 }
@@ -94,9 +99,9 @@ func (t *LoadChaincode) Query(stub shim.ChaincodeStubInterface, function string,
         fmt.Println("query is running " + function)
 
         // Handle different functions
-        if function == "read" {                                                                                                 //read a variable
+        if function == "read" {          //read one load information
                 return t.read(stub, args)
-        }else if function == "show_all" {
+        }else if function == "show_all" {  // read all loads
 	        	return t.read_all(stub)
         }
         fmt.Println("query did not find func: " + function)                                             //error
@@ -105,23 +110,25 @@ func (t *LoadChaincode) Query(stub shim.ChaincodeStubInterface, function string,
 }
 
 // ============================================================================================================================
-// Read - read a variable from chaincode state
+// Read - read one load from chaincode state
 // ============================================================================================================================
 func (t *LoadChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-        var name, jsonResp string
+        var loadNumber, jsonResp string
         var err error
 
-        name = args[0]
-        valAsbytes, err := stub.GetState(name)                                                                  //get the var from chaincode state
+        loadNumber = args[0]
+        valAsbytes, err := stub.GetState(loadNumber)    //get the var from chaincode state
         if err != nil {
-                jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
+                jsonResp = "{\"Error\":\"Failed to get state for " + loadNumber + "\"}"
                 return nil, errors.New(jsonResp)
         }
 
 
-        return valAsbytes, nil                                                                                                  //send it onward
+        return valAsbytes, nil    //send it onward
 }
-
+// ============================================================================================================================
+// Read - read all loads from chaincode state
+// ============================================================================================================================
 func (t *LoadChaincode) read_all(stub shim.ChaincodeStubInterface) ([]byte, error) {
         var err error
 
@@ -131,23 +138,30 @@ func (t *LoadChaincode) read_all(stub shim.ChaincodeStubInterface) ([]byte, erro
 			return nil, errors.New("Failed to get load index")
 		}
 		var loadIndex []string
-		json.Unmarshal(loadsAsBytes, &loadIndex)								//un stringify it aka JSON.parse()
+		json.Unmarshal(loadsAsBytes, &loadIndex)	//un stringify it aka JSON.parse()
 		
 		//remove load from index
 		jsonResponse := "" 
-		jsonResponse +=  "{ \"LoadNumber\":\""
+		jsonResponse +=  "{ \"loaddetails\":[\""
 		for i,val := range loadIndex {
 			fmt.Println(strconv.Itoa(i) + " - looking at " + val )
+			
+			valAsbytes, err := stub.GetState(val)    //get the loadnumber from chaincode state
+	        if err != nil {
+	                jsonResp := "{\"Error\":\"Failed to get state for " + val + "\"}"
+	                return nil, errors.New(jsonResp)
+	        }
+			
 			if i == 0 {
-				jsonResponse += val
+				jsonResponse += string(valAsbytes)
 			}else {	
-				jsonResponse += "," + val  
+				jsonResponse += "," + string(valAsbytes)  
 			}
 		}
-		jsonResponse +=  "\"}"
+		jsonResponse +=  "]\"}"
 		fmt.Printf("Query Response:%s\n", jsonResponse)
 
-	bs := []byte(jsonResponse) 
+		bs := []byte(jsonResponse) 
         return bs, nil                                                                                                  //send it onward
 }
 
@@ -170,14 +184,14 @@ func (t *LoadChaincode) Delete(stub shim.ChaincodeStubInterface, args []string) 
                 return nil, errors.New("Failed to get load index")
         }
         var loadIndex []string
-        json.Unmarshal(loadsAsBytes, &loadIndex)                                                                //un stringify it aka JSON.parse()
+        json.Unmarshal(loadsAsBytes, &loadIndex)     //un stringify it aka JSON.parse()
 
         //remove load from index
         for i,val := range loadIndex{
                 fmt.Println(strconv.Itoa(i) + " - looking at " + val + " for " + loadNumber)
                         fmt.Println("found load")
                         loadIndex = append(loadIndex[:i], loadIndex[i+1:]...)                   //remove it
-                        for x:= range loadIndex{                                                                                        //debug prints...
+                        for x:= range loadIndex{           //debug prints...
                                 fmt.Println(string(x) + " - " + loadIndex[x])
                         }
                         break
@@ -193,48 +207,64 @@ func (t *LoadChaincode) Delete(stub shim.ChaincodeStubInterface, args []string) 
 // ============================================================================================================================
 func (t *LoadChaincode) Write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-        // 0            loadnumber
-        // 1            status
-        // 2            carrier
-        // 3            date
+        //1. Load number
+		//2. carrier
+		
+		//updatable values ----
+		//3. shipment date
+		//4. delivery date
+		//5. status
+		//6. Equipment type
+		//7. Amount billed
+		//8. amount paid
+		//9. mileage
+		//10. weight
 
-        var loadNumber, status, carrier, date string // Entities
+        var loadNumber, status, shipDate, deliveryDate, equipmentType, amountBilled, amountPaid, mileage,  weight  string // Entities
         var err error
         fmt.Println("running write()")
 
-        if len(args) != 4 {
-                return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the variable and value to set")
+        if len(args) <= 5 {
+                return nil, errors.New("Incorrect number of arguments. Expecting atleast 5 of the variable and value to set")
         }
-	loadNumber = args[0]
-        status = args[1]
-        carrier = args[2]
-	date = args[0]
-
+        
+		loadNumber = args[0]
+	//	carrier = args[1]
+		shipDate = args[2]
+        deliveryDate = args[3]
+		status = args[4]
+		equipmentType  = args[5]
+		amountBilled  = args[6]
+		amountPaid  = args[7]
+		mileage  = args[8]
+		weight  = args[9]
 
         //get the load
         loadsAsBytes, err := stub.GetState(loadNumber)
         if err != nil {
-                return nil, errors.New("Failed to get load index")
+                return nil, errors.New("Load number :" + loadNumber + " does not exists")
         }
 
         var receivedLoadStruct Load
         json.Unmarshal(loadsAsBytes, &receivedLoadStruct)
 
         receivedLoadStruct.Status = status
-        receivedLoadStruct.CarrierName = carrier
-
-        if receivedLoadStruct.Status == "Delivered"{
-                receivedLoadStruct.DeliveryDate = date
-        }else{
-                receivedLoadStruct.ShipDate = date
-        }
+        receivedLoadStruct.DeliveryDate = deliveryDate
+        receivedLoadStruct.ShipDate = shipDate
+        receivedLoadStruct.EquipmentType = equipmentType
+        receivedLoadStruct.AmountBilled = amountBilled
+        receivedLoadStruct.AmountPaid = amountPaid
+        receivedLoadStruct.Mileage = mileage
+        receivedLoadStruct.Weight = weight
 
         receivedLoadStructBytes, err := json.Marshal(receivedLoadStruct)
-	err = stub.PutState(loadNumber, receivedLoadStructBytes)
+		err = stub.PutState(loadNumber, receivedLoadStructBytes)
 
         if err != nil {
                 return nil, err
         }
+        fmt.Println("write() completed")
+        
         return nil, nil
 }
 
@@ -244,21 +274,27 @@ func (t *LoadChaincode) Write(stub shim.ChaincodeStubInterface, args []string) (
 func (t *LoadChaincode) init_load(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
         var err error
         fmt.Println("Invoke is running init_load" )
+        
+        //1. Load number
+		//2. carrier
+		
+		//updatable values ----
+		//3. shipment date
+		//4. delivery date
+		//5. status
+		//6. Equipment type
+		//7. Amount billed
+		//8. amount paid
+		//9. mileage
+		//10. weight
 
-        //   0       1       2     3
-        // "asdf", "blue", "35", "bob"
-        // 0            loadnumber
-        // 1            status
-        // 2            carrier
-        // 3            shipdate
-        // 4            deliverydate
+        var loadNumber, status, carrier, shipDate, deliveryDate, equipmentType, amountBilled, amountPaid, mileage,  weight  string // Entities
 
         if len(args) != 5 {
-                return nil, errors.New("Incorrect number of arguments. Expecting 4")
+                return nil, errors.New("Incorrect number of arguments. Expecting 5")
         }
 
         //input sanitation
-        fmt.Println("- start init marble")
         if len(args[0]) <= 0 {
                 return nil, errors.New("1st argument must be a non-empty string")
         }
@@ -269,14 +305,19 @@ func (t *LoadChaincode) init_load(stub shim.ChaincodeStubInterface, args []strin
                 return nil, errors.New("3rd argument must be a non-empty string")
         }
 
-        loadNumber := args[0]
-        carrier := args[1]
-        shipDate := args[2]
-        deliveryDate := args[3]
-        status := args[4]
+        loadNumber = args[0]
+		carrier = args[1]
+		shipDate = args[2]
+        deliveryDate = args[3]
+		status = args[4]
+		equipmentType  = args[5]
+		amountBilled  = args[6]
+		amountPaid  = args[7]
+		mileage  = args[8]
+		weight  = args[9]
 
 
-        //check if marble already exists
+        //check if load already exists
         loadAsBytes, err := stub.GetState(loadNumber)
         if err != nil {
                 return nil, errors.New("Failed to get load number")
@@ -286,7 +327,7 @@ func (t *LoadChaincode) init_load(stub shim.ChaincodeStubInterface, args []strin
         if res.LoadNumber == loadNumber{
                 fmt.Println("This Load arleady exists: " + loadNumber)
                 fmt.Println(res);
-                return nil, errors.New("This Load arleady exists")                              //all stop a marble by this name exists
+                return nil, errors.New("This Load arleady exists")      
         }
 
         loadStruct := Load{}
@@ -295,10 +336,15 @@ func (t *LoadChaincode) init_load(stub shim.ChaincodeStubInterface, args []strin
         loadStruct.ShipDate = shipDate
         loadStruct.DeliveryDate = deliveryDate
         loadStruct.Status = status
+        loadStruct.EquipmentType = equipmentType
+        loadStruct.AmountBilled = amountBilled
+        loadStruct.AmountPaid = amountPaid
+        loadStruct.Mileage = mileage
+        loadStruct.Weight = weight
 
         loadJsonAsBytes, _ := json.Marshal(loadStruct)
 
-        err = stub.PutState(loadNumber, loadJsonAsBytes)                                                                        //store marble with id as key
+        err = stub.PutState(loadNumber, loadJsonAsBytes)           //store loads with loadnumber as key
         if err != nil {
                 return nil, err
         }
@@ -310,16 +356,15 @@ func (t *LoadChaincode) init_load(stub shim.ChaincodeStubInterface, args []strin
         }
 
         var loadIndex []string
-        json.Unmarshal(loadsAsBytes, &loadIndex)                                                        //un stringify it aka JSON.parse()
+        json.Unmarshal(loadsAsBytes, &loadIndex)        //un stringify it aka JSON.parse()
 
         //append
-        loadIndex = append(loadIndex, loadNumber)                                                                       //add marble name to index list
+        loadIndex = append(loadIndex, loadNumber)        //add loadnumber to index list
         fmt.Println("! load index: ", loadIndex)
         jsonAsBytes, _ := json.Marshal(loadIndex)
-        err = stub.PutState(loadNumberIndexStr, jsonAsBytes)                                            //store name of marble
+        err = stub.PutState(loadNumberIndexStr, jsonAsBytes)     //store load
 
-        fmt.Println("- end init load")
+        fmt.Println("- Completed init_load()")
         return nil, nil
 }
-
 
