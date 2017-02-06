@@ -35,12 +35,12 @@ var loadNumberIndexStr = "_loadindex"                           //name for the k
 type Load struct{
         LoadNumber string `json:"name"`                                 //the fieldtags are needed to keep case from bouncing around
         CarrierName string `json:"carrier"`
-        ShipDate string `json:"shipdate"`
-        DeliveryDate string `json:"deliverydate"`
+        ShipDate string `json:"shipDate"`
+        DeliveryDate string `json:"deliveryDate"`
         Status string `json:"status"`
-        EquipmentType string `json:"equipmenttype"`
-        AmountBilled string `json:"amountbilled"`
-        AmountPaid string `json:"amountpaid"`
+        EquipmentType string `json:"equipmentType"`
+        AmountBilled string `json:"amountBilled"`
+        AmountPaid string `json:"amountPaid"`
         Mileage string `json:"mileage"`
         Weight string `json:"weight"`
 }
@@ -142,7 +142,7 @@ func (t *LoadChaincode) read_all(stub shim.ChaincodeStubInterface) ([]byte, erro
 		
 		//remove load from index
 		jsonResponse := "" 
-		jsonResponse +=  "{ \"loaddetails\":[\""
+		jsonResponse +=  "{ \"loaddetails\":["
 		for i,val := range loadIndex {
 			fmt.Println(strconv.Itoa(i) + " - looking at " + val )
 			
@@ -158,7 +158,7 @@ func (t *LoadChaincode) read_all(stub shim.ChaincodeStubInterface) ([]byte, erro
 				jsonResponse += "," + string(valAsbytes)  
 			}
 		}
-		jsonResponse +=  "]\"}"
+		jsonResponse +=  "]}"
 		fmt.Printf("Query Response:%s\n", jsonResponse)
 
 		bs := []byte(jsonResponse) 
