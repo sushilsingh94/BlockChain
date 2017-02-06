@@ -101,7 +101,7 @@ func (t *LoadChaincode) Query(stub shim.ChaincodeStubInterface, function string,
         // Handle different functions
         if function == "read" {          //read one load information
                 return t.read(stub, args)
-        }else if function == "show_all" {  // read all loads
+        }else if function == "read_all" {  // read all loads
 	        	return t.read_all(stub)
         }
         fmt.Println("query did not find func: " + function)                                             //error
@@ -152,7 +152,7 @@ func (t *LoadChaincode) read_all(stub shim.ChaincodeStubInterface) ([]byte, erro
 	                return nil, errors.New(jsonResp)
 	        }
 			
-			if i == 0 {
+			if i == 1 {
 				jsonResponse += string(valAsbytes)
 			}else {	
 				jsonResponse += "," + string(valAsbytes)  
@@ -224,8 +224,8 @@ func (t *LoadChaincode) Write(stub shim.ChaincodeStubInterface, args []string) (
         var err error
         fmt.Println("running write()")
 
-        if len(args) <= 5 {
-                return nil, errors.New("Incorrect number of arguments. Expecting atleast 5 of the variable and value to set")
+        if len(args) <= 10 {
+                return nil, errors.New("Incorrect number of arguments. Expecting atleast 10 of the variable and value to set")
         }
         
 		loadNumber = args[0]
@@ -290,8 +290,8 @@ func (t *LoadChaincode) init_load(stub shim.ChaincodeStubInterface, args []strin
 
         var loadNumber, status, carrier, shipDate, deliveryDate, equipmentType, amountBilled, amountPaid, mileage,  weight  string // Entities
 
-        if len(args) != 5 {
-                return nil, errors.New("Incorrect number of arguments. Expecting 5")
+        if len(args) <= 10 {
+                return nil, errors.New("Incorrect number of arguments. Expecting 10")
         }
 
         //input sanitation
