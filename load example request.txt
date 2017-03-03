@@ -1,0 +1,171 @@
+CORE_CHAINCODE_ID_NAME=myload CORE_PEER_ADDRESS=0.0.0.0:7051 ./chaincode_loadexample
+
+peer chaincode deploy -u jim -n myload -c '{"Args": ["init", "a","100", "b", "200"]}'
+peer chaincode invoke -u jim -n myload -c '{"Args": ["init", "a","100", "b", "200"]}'
+peer chaincode invoke -u jim -l golang -n myload -c '{"Args": ["init_load", "loadnu11", "APVC carrier", "25/01/2016", "25/01/2016", "Planned"]}'
+peer chaincode invoke -u jim -l golang -n myload -c '{"Args": ["write", "loadnumber1", "Shipped", "APVC carrier", "25/01/2016"]}'
+
+peer chaincode query -u jim -l golang -n myload -c '{"Args": ["read", "loadnumber1"]}'
+peer chaincode query -u jim -l golang -n myload -c '{"Args": ["show_all", "loadnumber1"]}'
+
+REST:
+
+{
+  "jsonrpc": "2.0",
+  "method": "deploy",
+  "params": {
+    "type": 1,
+    "chaincodeID":{
+        "name": "myload"
+    },
+    "ctorMsg": {
+        "args":["init", "a", "100", "b", "200"]
+    },
+    "secureContext": "jim"
+  },
+  "id": 1
+}
+
+
+{
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+      "type": 1,
+      "chaincodeID":{
+          "name":"myload"
+      },
+      "ctorMsg": {
+         "args":["init_load", "load333333", "APVC carrier", "25/01/2016", "30/01/2016", "Planned"]
+      },
+      "secureContext": "jim"
+  },
+  "id": 3
+}
+
+{  
+   "jsonrpc":"2.0",
+   "method":"query",
+   "params":{  
+      "type":1,
+      "chaincodeID":{  
+         "name":"myload"
+      },
+      "ctorMsg":{  
+         "args":[ "read", "load892313" ]
+      },
+      "secureContext":"jim"
+   },
+   "id":5
+}
+
+
+Write/update
+{
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+      "type": 1,
+      "chaincodeID":{
+          "name":"myload"
+      },
+      "ctorMsg": {
+         "args":["write", "load892313", "APVC carrier", "25/01/2016", "28/01/2016", "Delivered","20ft truck","112.00","343.00","343","500 kg"]
+      },
+      "secureContext": "jim"
+  },
+  "id": 3
+}
+
+
+"loadnumber1", "APVC carrier", "25/01/2016", "25/01/2016", "Planned", "Amount Billed", "Amount Paid", "Equipment Type", "Milleage"
+
+
+Create load:
+------------
+1. Load number
+2. Carrier
+3. Shipment Date
+4. Delivery Date
+5. status
+
+Update Milestone
+---------------
+1. Load number
+2. carrier
+update ----
+3. shipment date
+4. delivery date
+5. status
+6. Equipment type
+
+
+Update invoice:
+---------------
+1. Load number
+2. carrier
+update ----
+3. shipment date
+4. delivery date
+5. status
+6. Equipment type
+7. Amount billed
+8. amount paid
+9. mileage
+10. weight
+
+
+{
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+      "type": 1,
+      "chaincodeID":{
+          "name":"myload"
+      },
+      "ctorMsg": {
+         "args":["init_load", "load_000101", "HUM carrier", "25/01/2016", "30/01/2016", "Planned","20ft truck","113.00","113.00","20","300"]
+      },
+      "secureContext": "jim"
+  },
+  "id": 3
+}
+
+
+
+load index:  [load892313 loadnu11 load_000101]
+
+
+{
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+      "type": 1,
+      "chaincodeID":{
+          "name":"myload"
+      },
+      "ctorMsg": {
+         "args":["init_load", "AMWC6000076", "DHL Global Forwarding", "Griffin, GA, US", "Beijing, CN (PEK)", "FCL_D-D","42HR", "2001.0", "652.0", "2017-12-31"]
+      },
+      "secureContext": "jim"
+  },
+  "id": 3
+}
+
+===========GITHUB.com==================
+
+git config --global http.proxy http://proxy.cat.com:80
+git config --global --get http.proxy
+git config --global --unset http.proxy
+
+To pull code first time
+git clone https://github.com/sushilsingh94/BlockChain.git
+
+//1. origin
+//2. destination
+//3. service
+// equipmentType
+// baseRate
+// acessorialRate
+// carrier
+// tenderExpiry
