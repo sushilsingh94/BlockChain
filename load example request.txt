@@ -154,7 +154,7 @@ load index:  [load892313 loadnu11 load_000101]
 
 ===========GITHUB.com==================
 
-git config --global http.proxy http://proxy.cat.com:80
+git config --global http.proxy http://proxy.xxx.com:80
 git config --global --get http.proxy
 git config --global --unset http.proxy
 
